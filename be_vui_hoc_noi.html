@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#ff8fb1">
+<title>Bé vui học nói - Trò chơi ngôn ngữ</title>
+<style>
+:root{--pink:#ff8fb1;--purple:#9277db;--yellow:#ffe28a;--mint:#baf0dc;--ink:#493b62}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Trebuchet MS",system-ui,sans-serif;background:linear-gradient(135deg,#fff1f6,#edf8ff 55%,#fff9df);color:var(--ink);min-height:100vh}
+header{text-align:center;padding:22px 14px 12px}
+h1{font-size:clamp(2rem,6vw,3.4rem);margin:0;color:#e75f91;text-shadow:2px 3px 0 white}
+.subtitle{font-size:1.05rem;margin:8px 0}
+main{max-width:900px;margin:0 auto;padding:10px 14px 30px}
+.panel{background:#ffffffdd;border:3px solid white;border-radius:28px;padding:clamp(16px,4vw,28px);box-shadow:0 8px 22px #70558b18;margin:12px 0}
+.row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+button{font:inherit;font-weight:800;border:0;border-radius:20px;padding:14px 18px;cursor:pointer;box-shadow:0 4px 0 #00000012;transition:transform .12s}
+button:active{transform:translateY(3px);box-shadow:none}
+.primary{background:var(--pink);color:white}.secondary{background:var(--mint);color:#276b59}.yellow{background:var(--yellow);color:#73571a}.purple{background:#d9ccff;color:#57439b}
+.mode{flex:1;min-width:210px;max-width:300px;min-height:120px;font-size:1.12rem}
+.mode span{display:block;font-size:2.6rem;margin-bottom:7px}
+.hidden{display:none!important}
+h2{text-align:center;margin:4px 0 14px;font-size:clamp(1.35rem,4vw,2rem)}
+.instruction{text-align:center;font-size:1.2rem;line-height:1.5;font-weight:700}
+.choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:20px auto;max-width:700px}
+.choice{background:white;border:3px solid #f4e8ff;padding:14px 5px;min-height:145px;color:var(--ink)}
+.choice .emoji{display:block;font-size:clamp(2.8rem,9vw,4.6rem);margin-bottom:8px}
+.choice .word{font-size:1rem}
+.feedback{text-align:center;font-size:1.25rem;font-weight:800;min-height:34px;margin:12px 0}
+.progress{height:12px;background:#f1e7f7;border-radius:99px;overflow:hidden;margin:12px 0}
+.progress div{height:100%;width:0;background:linear-gradient(90deg,#ff8fb1,#9277db);transition:width .3s}
+.big-emoji{text-align:center;font-size:clamp(5rem,20vw,9rem);line-height:1.2}
+.word-display{text-align:center;font-size:2rem;font-weight:900;color:#e75f91;margin:8px}
+footer{text-align:center;font-size:.9rem;padding:0 18px 24px;color:#756987}
+@media(max-width:480px){.choices{gap:7px}.choice{min-height:120px;padding:10px 3px;border-radius:16px}.choice .word{font-size:.9rem}button{padding:12px 14px}}
+</style>
+</head>
+<body>
+<header>
+  <h1>🌈 Bé vui học nói 🌈</h1>
+  <p class="subtitle">Chạm hình – nghe từ – cùng cô nói thật vui!</p>
+</header>
+<main>
+  <section id="home" class="panel">
+    <h2>🎈 Hôm nay bé muốn chơi gì?</h2>
+    <p class="instruction">Bé hãy chọn một trò chơi nhé!</p>
+    <div class="row">
+      <button class="mode primary" onclick="startGame('find')"><span>👀</span>Bé tìm đúng hình<br><small>Nghe và chọn hình</small></button>
+      <button class="mode secondary" onclick="startGame('say')"><span>🗣️</span>Bé tập nói<br><small>Nghe và nói theo</small></button>
+      <button class="mode yellow" onclick="startGame('sound')"><span>🐥</span>Tiếng kêu vui nhộn<br><small>Nghe tiếng con vật</small></button>
+    </div>
+    <p class="instruction" style="font-size:1rem;margin-top:18px">👩‍🏫 Gợi ý cho cô: khuyến khích trẻ gọi tên rõ ràng, không gây áp lực nếu trẻ chưa nói được.</p>
+  </section>
+
+  <section id="play" class="panel hidden">
+    <div class="row" style="justify-content:space-between;align-items:center">
+      <button class="purple" onclick="goHome()">🏠 Trang chủ</button>
+      <strong id="counter">Câu 1/5</strong>
+    </div>
+    <div class="progress"><div id="bar"></div></div>
+    <h2 id="question">Con gì đây?</h2>
+    <div id="sayArea" class="hidden">
+      <div class="big-emoji" id="sayEmoji">🐱</div>
+      <div class="word-display" id="sayWord">Con mèo</div>
+      <p class="instruction">Bé nghe nhé, rồi cùng cô nói: <span id="sayPrompt">“Con mèo”</span></p>
+      <div class="row">
+        <button class="primary" onclick="speakCurrent()">🔊 Nghe lại</button>
+        <button class="secondary" onclick="showSayEncouragement()">🗣️ Bé nói xong rồi!</button>
+        <button class="yellow" onclick="nextQuestion()">➡️ Tiếp theo</button>
+      </div>
+    </div>
+    <div id="soundArea" class="hidden">
+      <div class="big-emoji" id="soundEmoji">🐱</div>
+      <p class="instruction" id="soundHint">Con mèo kêu thế nào nhỉ?</p>
+      <div class="row">
+        <button class="primary" onclick="playAnimalSound()">🔊 Nghe tiếng kêu</button>
+        <button class="secondary" onclick="showSoundAnswer()">💬 Xem đáp án</button>
+        <button class="yellow" onclick="nextQuestion()">➡️ Tiếp theo</button>
+      </div>
+      <div class="feedback" id="soundFeedback" aria-live="polite"></div>
+    </div>
+    <div id="findArea" class="hidden">
+      <p class="instruction" id="findPrompt">Con gì đây? Bé hãy chạm vào hình đúng nhé!</p>
+      <div class="choices" id="choices"></div>
+      <div class="feedback" id="feedback" aria-live="polite"></div>
+      <div class="row"><button class="yellow hidden" id="nextBtn" onclick="nextQuestion()">➡️ Câu tiếp theo</button></div>
+    </div>
+  </section>
+
+  <section id="done" class="panel hidden">
+    <div class="big-emoji">🏆🌟🎉</div>
+    <h2>Hoan hô bé giỏi quá!</h2>
+    <p class="instruction" id="finishText">Bé đã hoàn thành trò chơi.</p>
+    <div class="row">
+      <button class="primary" onclick="startGame(mode)">🔁 Chơi lại</button>
+      <button class="secondary" onclick="goHome()">🏠 Chọn trò khác</button>
+    </div>
+  </section>
+</main>
+<footer>Thiết kế cho hoạt động phát triển ngôn ngữ trẻ 3 tuổi • Cô có thể chơi cùng bé và làm mẫu cách phát âm.</footer>
+<script>
+const items=[
+ {word:"Con mèo",emoji:"🐱",kind:"animal",sound:"Meo meo!",syllables:"con mèo"},
+ {word:"Con chó",emoji:"🐶",kind:"animal",sound:"Gâu gâu!",syllables:"con chó"},
+ {word:"Con vịt",emoji:"🦆",kind:"animal",sound:"Cạp cạp!",syllables:"con vịt"},
+ {word:"Con gà",emoji:"🐔",kind:"animal",sound:"Ò ó o!",syllables:"con gà"},
+ {word:"Quả chuối",emoji:"🍌",kind:"food",sound:"",syllables:"quả chuối"},
+ {word:"Quả táo",emoji:"🍎",kind:"food",sound:"",syllables:"quả táo"},
+ {word:"Bông hoa",emoji:"🌸",kind:"thing",sound:"",syllables:"bông hoa"},
+ {word:"Ô tô",emoji:"🚗",kind:"thing",sound:"Bíp bíp!",syllables:"ô tô"},
+ {word:"Quả bóng",emoji:"⚽",kind:"thing",sound:"",syllables:"quả bóng"}
+];
+let mode="find",round=0,questions=[],locked=false,current=null;
+function shuffle(a){return [...a].sort(()=>Math.random()-.5)}
+function speak(text){
+ try{if(!('speechSynthesis' in window)){alert("Thiết bị chưa hỗ trợ đọc thành tiếng. Cô hãy đọc mẫu cho bé nhé!");return}
+ speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(text);u.lang="vi-VN";u.rate=.82;u.pitch=1.12;speechSynthesis.speak(u)
+ }catch(e){}
+}
+function startGame(m){
+ mode=m;round=0;locked=false;
+ questions=shuffle(mode==="sound"?items.filter(x=>x.kind==="animal"):items).slice(0,5);
+ document.getElementById("home").classList.add("hidden");document.getElementById("done").classList.add("hidden");document.getElementById("play").classList.remove("hidden");
+ showQuestion()
+}
+function showQuestion(){
+ current=questions[round];locked=false;
+ document.getElementById("counter").textContent=`Câu ${round+1}/${questions.length}`;
+ document.getElementById("bar").style.width=(round/questions.length*100)+"%";
+ ["findArea","sayArea","soundArea"].forEach(id=>document.getElementById(id).classList.add("hidden"));
+ document.getElementById("feedback").textContent="";document.getElementById("soundFeedback").textContent="";
+ document.getElementById("nextBtn").classList.add("hidden");
+ if(mode==="say"){
+  document.getElementById("question").textContent="Bé nghe và nói theo nhé!";
+  document.getElementById("sayArea").classList.remove("hidden");
+  document.getElementById("sayEmoji").textContent=current.emoji;document.getElementById("sayWord").textContent=current.word;
+  document.getElementById("sayPrompt").textContent="“"+current.word+"”";
+  setTimeout(speakCurrent,350);
+ }else if(mode==="sound"){
+  document.getElementById("question").textContent="Bé đoán tiếng kêu nhé!";
+  document.getElementById("soundArea").classList.remove("hidden");
+  document.getElementById("soundEmoji").textContent=current.emoji;
+  document.getElementById("soundHint").textContent=current.word+" kêu thế nào nhỉ?";
+  setTimeout(playAnimalSound,350);
+ }else{
+  document.getElementById("question").textContent="👂 Bé lắng nghe nhé!";
+  document.getElementById("findArea").classList.remove("hidden");
+  document.getElementById("findPrompt").textContent="Bé hãy tìm: "+current.word+"!";
+  let options=shuffle([current,...shuffle(items.filter(x=>x!==current)).slice(0,2)]);
+  document.getElementById("choices").innerHTML="";
+  options.forEach(item=>{
+   let b=document.createElement("button");b.className="choice";
+   b.innerHTML=`<span class="emoji">${item.emoji}</span><span class="word">${item.word}</span>`;
+   b.onclick=()=>choose(item,b);document.getElementById("choices").appendChild(b)
+  });
+  speak("Con hãy tìm "+current.word)
+ }
+}
+function choose(item,btn){
+ if(locked)return;
+ if(item===current){
+  locked=true;document.getElementById("feedback").textContent="🎉 Đúng rồi! "+current.word+"!";
+  btn.style.borderColor="#67cfa5";btn.style.background="#eafff4";speak("Giỏi quá! "+current.word);
+  document.getElementById("nextBtn").classList.remove("hidden");
+ }else{
+  document.getElementById("feedback").textContent="😊 Mình thử lại nhé! Hãy nghe cô nói.";
+  speak("Chưa đúng rồi. Con nghe lại nhé. "+current.word)
+ }
+}
+function speakCurrent(){if(current)speak(current.word)}
+function showSayEncouragement(){document.getElementById("feedback").textContent="🌟 Bé cố gắng giỏi lắm! Cùng nói thêm một lần nhé.";speak("Giỏi lắm! "+current.word+". Cùng nói thêm một lần nhé.")}
+function playAnimalSound(){if(current)speak(current.sound||current.word)}
+function showSoundAnswer(){document.getElementById("soundFeedback").textContent="Đây là "+current.word+"!";speak("Đây là "+current.word+". "+current.sound)}
+function nextQuestion(){if(round<questions.length-1){round++;showQuestion()}else{document.getElementById("play").classList.add("hidden");document.getElementById("done").classList.remove("hidden");document.getElementById("bar").style.width="100%";document.getElementById("finishText").textContent="Bé đã cùng cô hoàn thành "+questions.length+" lượt chơi. Cô hãy khen bé và mời bé gọi tên những hình bé thích nhé!";speak("Hoan hô! Bé giỏi quá! Bé đã hoàn thành trò chơi.")}}
+function goHome(){document.getElementById("play").classList.add("hidden");document.getElementById("done").classList.add("hidden");document.getElementById("home").classList.remove("hidden");if(window.speechSynthesis)speechSynthesis.cancel()}
+</script>
+</body>
+</html>
